@@ -1,0 +1,2 @@
+-- Nexus Platform Initial Data
+-- This file is intentionally empty. Data is created through the API.
