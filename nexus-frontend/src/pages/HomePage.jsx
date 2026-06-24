@@ -18,7 +18,8 @@ export default function HomePage() {
   const fetchFeed = async () => {
     try {
       const res = await api.get(`/api/posts/feed?page=${page}`);
-      setPosts(prev => [...prev, ...res.data.content]);
+      const newPosts = res.data.content || res.data || [];
+      setPosts(prev => [...prev, ...newPosts]);
     } catch (error) {
       console.error('Error fetching feed:', error);
     } finally {
@@ -52,7 +53,7 @@ export default function HomePage() {
         {loading && posts.length === 0 ? (
           <div className="bento-grid">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className={`glass-panel animate-pulse ${i % 4 === 0 ? 'bento-grid-item-large' : ''}`} />
+              <div key={i} className={`skeleton ${i % 4 === 0 ? 'bento-grid-item-large' : ''}`} />
             ))}
           </div>
         ) : (
@@ -66,7 +67,7 @@ export default function HomePage() {
         {!loading && posts.length === 0 && (
           <div className="glass-panel text-center py-20 mt-10">
             <h2 className="text-3xl font-bold text-aurora mb-4">Welcome to CampusConnect</h2>
-            <p className="text-dark-300">Your feed is empty. Follow students from other campuses and start connecting!</p>
+            <p className="text-dark-300 whitespace-pre-line">Your feed is quiet. Follow students from other campuses and start connecting.</p>
             <Link to="/students" className="btn-aurora-primary mt-8 inline-block">Find Connections</Link>
           </div>
         )}

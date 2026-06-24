@@ -55,10 +55,19 @@ public class User {
     private String year;
 
     @Column(length = 500)
-    private String skills;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_skills")
+    @Builder.Default
+    private List<String> skills = new ArrayList<>();
 
     @Column(length = 500)
     private String interests;
+
+    @Builder.Default
+    private Boolean openToConnect = false;
+
+    @Builder.Default
+    private Boolean campusVerified = false;
 
     @Builder.Default
     private Integer followerCount = 0;

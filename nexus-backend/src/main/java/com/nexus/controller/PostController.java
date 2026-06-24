@@ -22,6 +22,12 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(request, auth.getName()));
     }
 
+    @PostMapping("/dev/seed")
+    public ResponseEntity<Void> seedPosts() {
+        postService.seedDevPosts();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPost(@PathVariable Long id, Authentication auth) {
         String username = auth != null ? auth.getName() : null;

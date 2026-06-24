@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -22,6 +23,12 @@ public class UserController {
     public ResponseEntity<UserResponse> getUser(@PathVariable Long id, Authentication auth) {
         String username = auth != null ? auth.getName() : null;
         return ResponseEntity.ok(userService.getUserProfile(id, username));
+    }
+
+    @GetMapping("/username/{username}")
+    public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username, Authentication auth) {
+        String currentUsername = auth != null ? auth.getName() : null;
+        return ResponseEntity.ok(userService.getUserProfileByUsername(username, currentUsername));
     }
 
     @PutMapping("/{id}")
@@ -64,5 +71,26 @@ public class UserController {
     public ResponseEntity<Page<UserResponse>> getFollowing(@PathVariable Long id,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(followService.getFollowing(id, page, size));
+    }
+
+    @PatchMapping("/me/open-to-connect")
+    public ResponseEntity<Void> toggleOpenToConnect(Authentication auth) {
+        userService.toggleOpenToConnect(auth.getName());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/me/skills")
+    public ResponseEntity<Void> addSkill(@RequestBody Map<String, String> payload, Authentication auth) {
+        String skill = payload.get("skill");
+        if (skill != null && !skill.trim().isEmpty()) {
+            userService.addSkill(auth.getName(), skill.trim());
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/dev/connect-all")
+    public ResponseEntity<Void> connectAll() {
+        followService.connectAllUsers();
+        return ResponseEntity.ok().build();
     }
 }

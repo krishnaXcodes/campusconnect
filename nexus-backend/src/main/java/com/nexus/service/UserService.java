@@ -18,6 +18,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
+    private final com.nexus.repository.PostRepository postRepository;
 
     public UserResponse getUserProfile(Long userId, String currentUsername) {
         User user = userRepository.findById(userId)
@@ -28,6 +29,21 @@ public class UserService {
             User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
             if (currentUser != null && !currentUser.getId().equals(userId)) {
                 isFollowing = followRepository.existsByFollowerIdAndFollowingId(currentUser.getId(), userId);
+            }
+        }
+
+        return mapToResponse(user, isFollowing);
+    }
+
+    public UserResponse getUserProfileByUsername(String targetUsername, String currentUsername) {
+        User user = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Boolean isFollowing = false;
+        if (currentUsername != null) {
+            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+            if (currentUser != null && !currentUser.getId().equals(user.getId())) {
+                isFollowing = followRepository.existsByFollowerIdAndFollowingId(currentUser.getId(), user.getId());
             }
         }
 
@@ -51,7 +67,10 @@ public class UserService {
         if (request.getCollege() != null) user.setCollege(request.getCollege());
         if (request.getDepartment() != null) user.setDepartment(request.getDepartment());
         if (request.getYear() != null) user.setYear(request.getYear());
-        if (request.getSkills() != null) user.setSkills(request.getSkills());
+        if (request.getSkills() != null) {
+            user.getSkills().clear();
+            user.getSkills().addAll(request.getSkills());
+        }
         if (request.getInterests() != null) user.setInterests(request.getInterests());
         if (request.getIsPrivate() != null) user.setIsPrivate(request.getIsPrivate());
 
@@ -59,8 +78,31 @@ public class UserService {
         return mapToResponse(user, false);
     }
 
+    @Transactional
+    public void toggleOpenToConnect(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setOpenToConnect(!user.getOpenToConnect());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void addSkill(String username, String skill) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (user.getSkills() != null && !user.getSkills().contains(skill)) {
+            user.getSkills().add(skill);
+            userRepository.save(user);
+        }
+    }
+
     public Page<UserResponse> searchUsers(String query, int page, int size) {
         return userRepository.searchUsers(query, PageRequest.of(page, size))
+                .map(u -> mapToResponse(u, false));
+    }
+
+    public Page<UserResponse> searchUsersBySkill(String skill, int page, int size) {
+        return userRepository.findUsersBySkill(skill, PageRequest.of(page, size))
                 .map(u -> mapToResponse(u, false));
     }
 
@@ -70,7 +112,7 @@ public class UserService {
 
         String college = user.getCollege() != null ? user.getCollege() : "";
         String skill = user.getSkills() != null && !user.getSkills().isEmpty()
-                ? user.getSkills().split(",")[0].trim() : "";
+                ? user.getSkills().get(0) : "";
         String interest = user.getInterests() != null && !user.getInterests().isEmpty()
                 ? user.getInterests().split(",")[0].trim() : "";
 
@@ -98,9 +140,11 @@ public class UserService {
                 .interests(user.getInterests())
                 .followerCount(user.getFollowerCount())
                 .followingCount(user.getFollowingCount())
-                .postCount(user.getPostCount())
+                .postCount(postRepository != null ? (int) postRepository.countByAuthorId(user.getId()) : user.getPostCount())
                 .isPrivate(user.getIsPrivate())
                 .isVerified(user.getIsVerified())
+                .campusVerified(user.getCampusVerified())
+                .openToConnect(user.getOpenToConnect())
                 .isFollowing(isFollowing)
                 .role(user.getRole().name())
                 .createdAt(user.getCreatedAt())

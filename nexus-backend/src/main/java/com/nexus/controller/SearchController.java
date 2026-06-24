@@ -30,6 +30,8 @@ public class SearchController {
 
         if ("users".equals(type)) {
             return ResponseEntity.ok(userService.searchUsers(q, page, size));
+        } else if ("skills".equals(type)) {
+            return ResponseEntity.ok(userService.searchUsersBySkill(q, page, size));
         } else if ("hashtags".equals(type)) {
             Page<HashtagResponse> hashtags = hashtagRepository.searchByName(q, PageRequest.of(page, size))
                     .map(h -> HashtagResponse.builder().id(h.getId()).name(h.getName()).postCount(h.getPostCount()).build());

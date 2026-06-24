@@ -41,8 +41,11 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                        .requestMatchers("/api/posts/dev/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/search/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/hashtags/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/dev/connect-all").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )

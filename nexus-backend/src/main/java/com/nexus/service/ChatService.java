@@ -53,6 +53,7 @@ public class ChatService {
         return mapMessageToResponse(message);
     }
 
+    @Transactional(readOnly = true)
     public List<ConversationResponse> getConversations(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -72,9 +73,46 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public Page<MessageResponse> getMessages(Long conversationId, int page, int size) {
         return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId, PageRequest.of(page, size))
                 .map(this::mapMessageToResponse);
+    }
+
+    @Transactional
+    public MessageResponse editMessage(Long messageId, com.nexus.dto.request.EditMessageRequest request, String username) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
+
+        if (!message.getSender().getUsername().equals(username)) {
+            throw new RuntimeException("Not authorized to edit this message");
+        }
+
+        message.setContent(request.getContent());
+        message.setIsEdited(true);
+        message = messageRepository.save(message);
+
+        // Update conversation lastMessage if this was the last message
+        Conversation conversation = message.getConversation();
+        // A full implementation would check if this is the last message. For simplicity, we just update it if it matches.
+        if (conversation.getLastMessage().equals(message.getContent())) {
+            conversation.setLastMessage(request.getContent());
+            conversationRepository.save(conversation);
+        }
+
+        return mapMessageToResponse(message);
+    }
+
+    @Transactional
+    public void deleteMessage(Long messageId, String username) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
+
+        if (!message.getSender().getUsername().equals(username)) {
+            throw new RuntimeException("Not authorized to delete this message");
+        }
+
+        messageRepository.delete(message);
     }
 
     private MessageResponse mapMessageToResponse(Message m) {
@@ -87,6 +125,7 @@ public class ChatService {
                 .content(m.getContent())
                 .mediaUrl(m.getMediaUrl())
                 .isRead(m.getIsRead())
+                .isEdited(m.getIsEdited())
                 .createdAt(m.getCreatedAt())
                 .build();
     }

@@ -74,6 +74,7 @@ public class PostService {
         return mapToResponse(post, username, FeedReasonType.FOLLOWING, "You created this");
     }
 
+    @Transactional(readOnly = true)
     public PostResponse getPostById(Long id, String username) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
@@ -111,6 +112,7 @@ public class PostService {
         userRepository.save(author);
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getFeed(String username, int page, int size) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -123,7 +125,7 @@ public class PostService {
         if (followingIds.size() <= 1) {
             // New user with no follows — show trending
             return postRepository.findTrendingPosts(pageable)
-                    .map(p -> mapToResponse(p, username, FeedReasonType.TRENDING, "Trending on Nexus"));
+                    .map(p -> mapToResponse(p, username, FeedReasonType.TRENDING, "Trending on CampusConnect"));
         }
 
         Page<Post> feedPosts = postRepository.findFeedPosts(followingIds, pageable);
@@ -145,6 +147,7 @@ public class PostService {
         });
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getExplorePosts(String username, int page, int size) {
         User user = userRepository.findByUsername(username).orElse(null);
         Pageable pageable = PageRequest.of(page, size);
@@ -159,23 +162,27 @@ public class PostService {
                 .map(p -> mapToResponse(p, null, FeedReasonType.TRENDING, "Trending"));
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getUserPosts(Long userId, int page, int size, String username) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         return postRepository.findByAuthorId(userId, pageable)
                 .map(post -> mapToResponse(post, username, null, null));
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getPostsByHashtag(Long hashtagId, int page, int size, String username) {
         Pageable pageable = PageRequest.of(page, size);
         return postRepository.findByHashtagId(hashtagId, pageable)
                 .map(post -> mapToResponse(post, username, FeedReasonType.HASHTAG, "Hashtag"));
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> searchPosts(String query, int page, int size, String username) {
         return postRepository.searchPosts(query, PageRequest.of(page, size))
                 .map(post -> mapToResponse(post, username, null, null));
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getCampusTrending(String college, int page, int size, String username) {
         return postRepository.findTrendingByCollege(college, PageRequest.of(page, size))
                 .map(p -> mapToResponse(p, username, FeedReasonType.CAMPUS_TRENDING, "Trending at " + college));
@@ -236,6 +243,38 @@ public class PostService {
                 hashtag.setPostCount(hashtag.getPostCount() + 1);
                 hashtagRepository.save(hashtag);
                 postHashtagRepository.save(PostHashtag.builder().post(post).hashtag(hashtag).build());
+            }
+        }
+    }
+
+    @Transactional
+    public void seedDevPosts() {
+        List<User> users = userRepository.findAll();
+        String[] sampleImages = {
+            "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
+            "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800",
+            "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+            "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800",
+            "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800"
+        };
+        String[] captions = {
+            "Just finished a great coding session! #devlife",
+            "Loving the new tech stack. So much faster. \uD83D\uDE80 #programming",
+            "Campus looks beautiful today! #campusconnect",
+            "Working on my final year project. Wish me luck! \uD83D\uDCBB",
+            "Anyone up for a hackathon this weekend? #hackathon"
+        };
+        
+        java.util.Random rand = new java.util.Random();
+        for (User user : users) {
+            for (int i = 0; i < 2; i++) {
+                Post post = Post.builder()
+                        .caption(captions[rand.nextInt(captions.length)])
+                        .mediaUrls(sampleImages[rand.nextInt(sampleImages.length)])
+                        .postType(com.nexus.enums.PostType.IMAGE)
+                        .author(user)
+                        .build();
+                postRepository.save(post);
             }
         }
     }

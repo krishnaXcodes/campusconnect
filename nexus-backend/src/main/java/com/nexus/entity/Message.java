@@ -38,6 +38,9 @@ public class Message {
     @Builder.Default
     private Boolean isRead = false;
 
+    @Builder.Default
+    private Boolean isEdited = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

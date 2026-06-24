@@ -1,6 +1,7 @@
 package com.nexus.dto.request;
 
 import lombok.*;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UpdateProfileRequest {
@@ -12,7 +13,7 @@ public class UpdateProfileRequest {
     private String college;
     private String department;
     private String year;
-    private String skills;
+    private List<String> skills;
     private String interests;
     private Boolean isPrivate;
 }

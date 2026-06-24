@@ -31,4 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.college = :college ORDER BY u.followerCount DESC")
     Page<User> findTopCreatorsByCollege(@Param("college") String college, Pageable pageable);
+
+    @Query("SELECT DISTINCT u FROM User u JOIN u.skills s WHERE LOWER(s) LIKE LOWER(CONCAT('%', :skill, '%'))")
+    Page<User> findUsersBySkill(@Param("skill") String skill, Pageable pageable);
 }

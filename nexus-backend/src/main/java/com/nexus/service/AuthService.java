@@ -23,6 +23,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final List<String> VERIFIED_DOMAINS = List.of(
+            "cumail.in", "cuchd.in",
+            "iit.ac.in", "nit.ac.in", "vit.ac.in"
+    );
+
+    private boolean isCampusVerified(String email) {
+        if (email == null || !email.contains("@")) return false;
+        String domain = email.substring(email.indexOf('@') + 1).toLowerCase();
+        return VERIFIED_DOMAINS.contains(domain);
+    }
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -44,8 +55,9 @@ public class AuthService {
                 .college(request.getCollege())
                 .department(request.getDepartment())
                 .year(request.getYear())
-                .skills(request.getSkills())
+                .skills(request.getSkills() != null ? request.getSkills() : new java.util.ArrayList<>())
                 .interests(request.getInterests())
+                .campusVerified(isCampusVerified(request.getEmail()))
                 .role(UserRole.USER)
                 .build();
 
@@ -60,6 +72,11 @@ public class AuthService {
                 .email(user.getEmail())
                 .profileImage(user.getProfileImage())
                 .role(user.getRole().name())
+                .college(user.getCollege())
+                .department(user.getDepartment())
+                .campusVerified(user.getCampusVerified())
+                .openToConnect(user.getOpenToConnect())
+                .skills(user.getSkills())
                 .build();
     }
 
@@ -80,6 +97,11 @@ public class AuthService {
                 .email(user.getEmail())
                 .profileImage(user.getProfileImage())
                 .role(user.getRole().name())
+                .college(user.getCollege())
+                .department(user.getDepartment())
+                .campusVerified(user.getCampusVerified())
+                .openToConnect(user.getOpenToConnect())
+                .skills(user.getSkills())
                 .build();
     }
 
@@ -106,6 +128,8 @@ public class AuthService {
                 .postCount(user.getPostCount())
                 .isPrivate(user.getIsPrivate())
                 .isVerified(user.getIsVerified())
+                .campusVerified(user.getCampusVerified())
+                .openToConnect(user.getOpenToConnect())
                 .role(user.getRole().name())
                 .createdAt(user.getCreatedAt())
                 .build();

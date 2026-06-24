@@ -71,11 +71,13 @@ public class FollowService {
         userRepository.save(following);
     }
 
+    @Transactional(readOnly = true)
     public Page<UserResponse> getFollowers(Long userId, int page, int size) {
         return followRepository.findByFollowingIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
                 .map(f -> mapUserResponse(f.getFollower()));
     }
 
+    @Transactional(readOnly = true)
     public Page<UserResponse> getFollowing(Long userId, int page, int size) {
         return followRepository.findByFollowerIdOrderByCreatedAtDesc(userId, PageRequest.of(page, size))
                 .map(f -> mapUserResponse(f.getFollowing()));
@@ -93,5 +95,22 @@ public class FollowService {
                 .postCount(user.getPostCount())
                 .isVerified(user.getIsVerified())
                 .build();
+    }
+
+    @Transactional
+    public void connectAllUsers() {
+        java.util.List<User> users = userRepository.findAll();
+        for (User follower : users) {
+            for (User following : users) {
+                if (!follower.getId().equals(following.getId())) {
+                    if (!followRepository.existsByFollowerIdAndFollowingId(follower.getId(), following.getId())) {
+                        followRepository.save(Follow.builder().follower(follower).following(following).build());
+                        follower.setFollowingCount(follower.getFollowingCount() + 1);
+                        following.setFollowerCount(following.getFollowerCount() + 1);
+                    }
+                }
+            }
+        }
+        userRepository.saveAll(users);
     }
 }

@@ -3,6 +3,7 @@ package com.nexus.dto.response;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UserResponse {
@@ -17,13 +18,15 @@ public class UserResponse {
     private String college;
     private String department;
     private String year;
-    private String skills;
+    private List<String> skills;
     private String interests;
     private Integer followerCount;
     private Integer followingCount;
     private Integer postCount;
     private Boolean isPrivate;
     private Boolean isVerified;
+    private Boolean campusVerified;
+    private Boolean openToConnect;
     private Boolean isFollowing;
     private String role;
     private LocalDateTime createdAt;

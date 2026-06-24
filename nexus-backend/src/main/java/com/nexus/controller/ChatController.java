@@ -35,4 +35,15 @@ public class ChatController {
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
         return ResponseEntity.ok(chatService.getMessages(conversationId, page, size));
     }
+
+    @PutMapping("/messages/{messageId}")
+    public ResponseEntity<MessageResponse> editMessage(@PathVariable Long messageId, @Valid @RequestBody com.nexus.dto.request.EditMessageRequest request, Authentication auth) {
+        return ResponseEntity.ok(chatService.editMessage(messageId, request, auth.getName()));
+    }
+
+    @DeleteMapping("/messages/{messageId}")
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long messageId, Authentication auth) {
+        chatService.deleteMessage(messageId, auth.getName());
+        return ResponseEntity.noContent().build();
+    }
 }

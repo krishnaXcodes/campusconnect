@@ -2,15 +2,37 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { FiMapPin, FiHash } from 'react-icons/fi';
+import { FiMapPin, FiHash, FiImage } from 'react-icons/fi';
 
 export default function CreatePostPage() {
   const navigate = useNavigate();
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
-
+  const [imageUrl, setImageUrl] = useState('');
   const [hashtags, setHashtags] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    setUploading(true);
+    try {
+      const res = await api.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setImageUrl(res.data.url);
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +44,8 @@ export default function CreatePostPage() {
         caption,
         location,
         hashtags: parsedHashtags,
-        postType: 'TEXT'
+        postType: imageUrl.trim() ? 'IMAGE' : 'TEXT',
+        mediaUrls: imageUrl.trim() ? [imageUrl.trim()] : []
       };
 
       await api.post('/api/posts', payload);
@@ -62,7 +85,7 @@ export default function CreatePostPage() {
                     placeholder="Location" 
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="w-32 bg-transparent outline-none text-sm text-dark-300"
+                    className="w-24 bg-transparent outline-none text-sm text-dark-300 placeholder-dark-500"
                   />
                 </div>
 
@@ -73,7 +96,21 @@ export default function CreatePostPage() {
                     placeholder="Hashtags" 
                     value={hashtags}
                     onChange={(e) => setHashtags(e.target.value)}
-                    className="w-32 bg-transparent outline-none text-sm text-dark-300"
+                    className="w-24 bg-transparent outline-none text-sm text-dark-300 placeholder-dark-500"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 relative">
+                  <FiImage className="text-aurora-cyan" size={20} />
+                  <span className="text-sm text-dark-300">
+                    {uploading ? 'Uploading...' : 'Upload Image'}
+                  </span>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </div>
               </div>
@@ -91,6 +128,20 @@ export default function CreatePostPage() {
                 </button>
               </div>
             </div>
+
+            {/* Image Preview */}
+            {imageUrl.trim() && (
+              <div className="mt-4 rounded-xl overflow-hidden border border-dark-200 dark:border-dark-800 h-64 bg-dark-900 relative group">
+                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+                <button 
+                  type="button" 
+                  onClick={() => setImageUrl('')}
+                  className="absolute top-2 right-2 bg-dark-900/80 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>

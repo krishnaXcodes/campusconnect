@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.List;
+
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class RegisterRequest {
     @NotBlank @Size(min = 3, max = 50) private String username;
@@ -14,6 +16,6 @@ public class RegisterRequest {
     private String college;
     private String department;
     private String year;
-    private String skills;
+    private List<String> skills;
     private String interests;
 }

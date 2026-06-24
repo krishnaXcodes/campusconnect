@@ -14,5 +14,6 @@ public class MessageResponse {
     private String content;
     private String mediaUrl;
     private Boolean isRead;
+    private Boolean isEdited;
     private LocalDateTime createdAt;
 }
